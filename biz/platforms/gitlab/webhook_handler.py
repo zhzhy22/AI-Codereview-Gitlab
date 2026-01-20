@@ -212,15 +212,12 @@ class PushHandler:
         return commit_details
 
     def add_push_notes(self, message: str):
-        # 添加评论到 GitLab Push 请求的提交中（此处假设是在最后一次提交上添加注释）
-        if not self.commit_list:
-            logger.warn("No commits found to add notes to.")
-            return
-
-        # 获取最后一个提交的ID
-        last_commit_id = self.commit_list[-1].get('id')
+        # 添加评论到 GitLab Push 请求的提交中（添加到最新的提交上）
+        # 使用webhook数据中的after字段获取最新的commit ID，而不是commits数组的最后一个元素
+        # 因为commits数组是按时间正序排列的（最新的在前，最旧的在后）
+        last_commit_id = self.webhook_data.get('after')
         if not last_commit_id:
-            logger.error("Last commit ID not found.")
+            logger.error("Last commit ID not found in webhook data 'after' field.")
             return
 
         url = urljoin(f"{self.gitlab_url}/",
